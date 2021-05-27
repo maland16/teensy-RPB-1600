@@ -7,7 +7,9 @@
 #ifndef RPB_1600_H
 #define RPB_1600_H
 
-// #define RPB_1600_DEBUG
+// Uncomment the below #define to enable debugging print statements.
+// NOTE: You must call Serial.being(<baud rate>) in your setup() for this to work
+#define RPB_1600_DEBUG
 
 /**
  * @brief The maximum number of bytes we could possibly expect to receive from the charger
@@ -86,7 +88,7 @@ struct charge_status
     bool timeout_flag_float_mode;
 };
 
-struct curve_data
+struct curve_parameters
 {
     uint16_t cc;
     uint16_t cv;
@@ -95,6 +97,7 @@ struct curve_data
     curve_config config;
     uint16_t cc_timeout;
     uint16_t cv_timeout;
+    uint16_t float_timeout;
     charge_status status;
 };
 
@@ -104,7 +107,12 @@ public:
     RPB_1600();
     bool Init(uint8_t chargerAddress);
     bool getReadings(readings *data);
+    /**
+     * @brief Get charger status bytes by populating a "charge_status" struct
+     */
+    bool getChargeStatus(charge_status *status);
     bool getCurveConfig(curve_config *conf);
+    bool getCurveParams(curve_parameters *params);
 
 private:
     /**
@@ -122,7 +130,9 @@ private:
 
     bool readWithCommand(uint8_t commandID, uint8_t receiveLength);
 
-    uint16_t parseLinearData();
+    uint16_t parseLinearData(void);
+    void parseCurveConfig(curve_config *config);
+    void parseChargeStatus(charge_status *status);
     int16_t UpscaleTwosComplement(int16_t value, size_t length);
     uint16_t convertToLinear(int8_t N);
 
