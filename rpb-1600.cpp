@@ -2,6 +2,10 @@
 #include "rpb-1600-commands.h"
 #include "Wire.h"
 
+//----------------------------------------------------------------------
+// Public Functions
+//----------------------------------------------------------------------
+
 RPB_1600::RPB_1600()
 {
 }
@@ -67,11 +71,6 @@ bool RPB_1600::getChargeStatus(charge_status *status)
 
     parseChargeStatus(status);
 
-    return true;
-}
-
-bool RPB_1600::getCurveConfig(curve_config *conf)
-{
     return true;
 }
 
@@ -147,6 +146,10 @@ bool RPB_1600::getCurveParams(curve_parameters *params)
     return true;
 }
 
+//----------------------------------------------------------------------
+// Private Functions
+//----------------------------------------------------------------------
+
 bool RPB_1600::readWithCommand(uint8_t commandID, uint8_t receiveLength)
 {
 #ifdef RPB_1600_DEBUG
@@ -194,6 +197,24 @@ bool RPB_1600::readWithCommand(uint8_t commandID, uint8_t receiveLength)
 #endif
 
     return num_bytes == receiveLength;
+}
+
+bool RPB_1600::writeTwoBytes(uint8_t commandID, uint8_t *data)
+{
+#ifdef RPB_1600_DEBUG
+    Serial.printf("<RPB-1600 DEBUG> Attempting to write 0x%x (low) and 0x%x (high) with command 0x%x\n", data[0], data[1], commandID);
+#endif
+
+    Wire.beginTransmission(my_charger_address);
+    Wire.write(commandID);
+    uint8_t bytes_written = Wire.write(data, 2);
+    Wire.endTransmission();
+
+    return bytes_written == 2;
+}
+
+bool RPB_1600::writeLinearDataCommand(uint8_t commandID, uint8_t N, int16_t value)
+{
 }
 
 uint16_t RPB_1600::parseLinearData(void)

@@ -108,11 +108,11 @@ public:
     bool Init(uint8_t chargerAddress);
     bool getReadings(readings *data);
     /**
-     * @brief Get charger status bytes by populating a "charge_status" struct
+     * @brief Query charger for status bytes, populate a "charge_status" struct
      */
     bool getChargeStatus(charge_status *status);
-    bool getCurveConfig(curve_config *conf);
     bool getCurveParams(curve_parameters *params);
+    bool writeTwoBytes(uint8_t commandID, uint8_t *data);
 
 private:
     /**
@@ -129,7 +129,7 @@ private:
     uint8_t my_rx_buffer[MAX_RECEIVE_BYTES];
 
     bool readWithCommand(uint8_t commandID, uint8_t receiveLength);
-
+    bool writeLinearDataCommand(uint8_t commandID, uint8_t N, int16_t value);
     uint16_t parseLinearData(void);
     void parseCurveConfig(curve_config *config);
     void parseChargeStatus(charge_status *status);
