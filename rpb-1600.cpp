@@ -143,6 +143,7 @@ bool RPB_1600::getCurveParams(curve_parameters *params)
     params->float_timeout = parseLinearData();
 
     getChargeStatus(&params->status);
+
     return true;
 }
 
@@ -213,8 +214,44 @@ bool RPB_1600::writeTwoBytes(uint8_t commandID, uint8_t *data)
     return bytes_written == 2;
 }
 
-bool RPB_1600::writeLinearDataCommand(uint8_t commandID, uint8_t N, int16_t value)
+bool RPB_1600::writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value)
 {
+    // Make sure the N value isn't bigger then 5 bits
+    if (abs(N) > 15)
+    {
+#ifdef RPB_1600_DEBUG
+        Serial.printf("<RPB-1600 DEBUG> N value too large! Can't convert to linear format. N = %d\n", N);
+#endif
+        return false;
+    }
+
+    // Make sure the value (Mantissa) can fit in 11 bits
+    if (abs(value) > 2047)
+    {
+#ifdef RPB_1600_DEBUG
+        Serial.printf("<RPB-1600 DEBUG> Mantissa value too large! Can't convert to linear format. Value = %d\n", value);
+#endif
+        return false;
+    }
+
+    // The goal here is to truncate value to 11 bits, and put those in the lowest 11 bits of the outgoing data
+    // Then we need to truncate N to 5 bits, and put those bits in the highest 5 bits of the outgoing data
+    // See Section 7.1 of the PMBus 1.1 specification for more info on the "Linear Data Format"
+    // Note that data[0] is the low byte (sent first) and data[1] is the high byte (sent second)
+    uint8_t data[2] = {0x00, 0x00};
+
+    // Mask the lowest 8 bits of the mantissa, and put those bits in the low byte of the outgoing data
+    data[0] = value & 0x00FF;
+    // Mask the lowest 3 bits of the high byte of the mantissa, and put those bits in the high byte of the outgoing data
+    data[1] = (value & 0x0700) >> 8;
+    // Mask the lowest 5 bits of N, and shift them to be the highest 5 bytes of the high byte
+    data[1] = (N & 0x1F) << 3;
+#ifdef RPB_1600_DEBUG
+    Serial.printf("<RPB-1600 DEBUG> Attempting to write linear data with N = %d and Value (Y) = %d\n", N, value);
+#endif
+    writeTwoBytes(commandID, data);
+
+    return true;
 }
 
 uint16_t RPB_1600::parseLinearData(void)
@@ -258,7 +295,7 @@ void RPB_1600::parseCurveConfig(curve_config *config)
     // Bits 2 & 3 of low byte
     config->temp_compensation = (my_rx_buffer[0] & 0x0C) >> 2;
     // Bit 7 of low byte (0 = 3 stage, 1 = 2 stage)
-    config->num_charge_stages = (my_rx_buffer[0] && 0x40) ? 3 : 2;
+    config->num_charge_stages = (my_rx_buffer[0] && 0x40) ? 2 : 3;
     // Bit 0 of high byte
     config->cc_timeout_indication_enabled = (my_rx_buffer[1] && 0x01);
     // Bit 1 of high byte

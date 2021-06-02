@@ -1,3 +1,8 @@
+/**
+ * This file contains #defines for all of the commands supported by the RPB-1600
+ * It also includes data length and N values for decoding/encoding values
+ * See the PMBus 1.1 specifications "Linear data" section for more info
+ */
 
 // Command Codes
 #define CMD_CODE_OPERATION 0x01
@@ -29,7 +34,7 @@
 #define CMD_CODE_MFR_DATE 0x9D
 #define CMD_CODE_MFR_SERIAL 0x9E
 
-// Charing Curve config commands
+// Charing Curve config command codes
 #define CMD_CODE_CURVE_CC 0xB0
 #define CMD_CODE_CURVE_CV 0xB1
 #define CMD_CODE_CURVE_FV 0xB2
@@ -40,7 +45,7 @@
 #define CMD_CODE_CURVE_FLOAT_TIMEOUT 0xB7
 #define CMD_CODE_CHG_STATUS 0xB8
 
-// Command lengths
+// Command lengths in bytes
 #define CMD_LENGTH_OPERATION 1
 #define CMD_LENGTH_ON_OFF_CONFIG 1
 #define CMD_LENGTH_CAPABILITY 1

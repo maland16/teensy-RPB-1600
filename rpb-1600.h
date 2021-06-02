@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifndef RPB_1600_H
 #define RPB_1600_H
@@ -16,8 +17,8 @@
  */
 #define MAX_RECEIVE_BYTES 12
 
-#define N_EXPONENT_MASK 0xF800
-#define MANTISSA_MASK 0x07FF
+#define N_EXPONENT_MASK 0xF800 // Bitmask for pulling out the first 5 bytes of the payload (the N exponent value)
+#define MANTISSA_MASK 0x07FF   // Bitmask for pulling out the last 11 bytes of the payload (the Mantissa)
 #define N_EXPONENT_LENGTH 5
 #define MANTISSA_LENGTH 11
 #define N_EXPONENT_SHIFT MANTISSA_LENGTH
@@ -107,12 +108,26 @@ public:
     RPB_1600();
     bool Init(uint8_t chargerAddress);
     bool getReadings(readings *data);
+
     /**
      * @brief Query charger for status bytes, populate a "charge_status" struct
      */
     bool getChargeStatus(charge_status *status);
+
+    /**
+     * @brief Query charger for curve parameter bytes, populate a "curve_parameters" struct
+     */
     bool getCurveParams(curve_parameters *params);
+
+    /**
+     * @brief Write two arbitrary bytes with commandID
+     */
     bool writeTwoBytes(uint8_t commandID, uint8_t *data);
+
+    /**
+     * @brief 
+     */
+    bool writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value);
 
 private:
     /**
@@ -123,19 +138,45 @@ private:
      * @note Address 0 is a reserved address.
      */
     uint8_t my_charger_address;
+
     /**
      * @brief Buffer to hold bytes received over i2c
      */
     uint8_t my_rx_buffer[MAX_RECEIVE_BYTES];
 
+    /**
+     * @brief Sends commandID to the charger, and reads the receiveLength byte(s) long response into my_rx_buffer[] 
+     * @return true if we received the number of bytes we were expecting, false otherwise.
+     */
     bool readWithCommand(uint8_t commandID, uint8_t receiveLength);
-    bool writeLinearDataCommand(uint8_t commandID, uint8_t N, int16_t value);
-    uint16_t parseLinearData(void);
-    void parseCurveConfig(curve_config *config);
-    void parseChargeStatus(charge_status *status);
-    int16_t UpscaleTwosComplement(int16_t value, size_t length);
-    uint16_t convertToLinear(int8_t N);
 
+    /**
+     * @brief Parses the first two bytes of my_rx_buffer[] in the "Linear Data" format outlined int the PMBus Specification
+     * @details see the PMBus V1.1 Section 7.1 "Linear Data Format" for more info
+     */
+    uint16_t parseLinearData(void);
+
+    /**
+     * @brief Parses the first two bytes of my_rx_buffer[] into a curve_config struct and returns it via argument.
+     * @details Meant to be called after calling readWithCommand(CMD_CODE_CURVE_CONFIG, CMD_LENGTH_CURVE_CONFIG)
+     */
+    void parseCurveConfig(curve_config *config);
+
+    /**
+     * @brief Parses the first two bytes of my_rx_buffer[] into a charge_status struct and returns it via argument.
+     * @details Meant to be called after calling readWithCommand(CMD_CODE_CHG_STATUS, CMD_LENGTH_CHG_STATUS)
+     */
+    void parseChargeStatus(charge_status *status);
+
+    /**
+     * @brief Takes in a twos complement number that's length bits and converts it to a 16 bit twos complement number
+     * @details Slightly modified version of this https://www.codeproject.com/Tips/1079637/Twos-Complement-for-Unusual-Integer-Sizes
+     */
+    int16_t UpscaleTwosComplement(int16_t value, size_t length);
+
+    /**
+     * @brief Zeros my_rx_buffer
+     */
     void clearRXBuffer(void);
 };
 
