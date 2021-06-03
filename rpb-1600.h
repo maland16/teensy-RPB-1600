@@ -10,7 +10,7 @@
 
 // Uncomment the below #define to enable debugging print statements.
 // NOTE: You must call Serial.being(<baud rate>) in your setup() for this to work
-#define RPB_1600_DEBUG
+//#define RPB_1600_DEBUG
 
 /**
  * @brief The maximum number of bytes we could possibly expect to receive from the charger
@@ -26,7 +26,7 @@
 struct readings
 {
     uint16_t v_in;
-    uint16_t v_out;
+    float v_out;
     uint16_t i_out;
     uint16_t fan_speed_1;
     uint16_t fan_speed_2;
@@ -92,8 +92,8 @@ struct charge_status
 struct curve_parameters
 {
     uint16_t cc;
-    uint16_t cv;
-    uint16_t floating_voltage;
+    float cv;
+    float floating_voltage;
     uint16_t taper_current;
     curve_config config;
     uint16_t cc_timeout;
@@ -107,27 +107,45 @@ class RPB_1600
 public:
     RPB_1600();
     bool Init(uint8_t chargerAddress);
+
+    /**
+     * @brief Query charger for voltage & current readings, populate a "readings" struct
+     * @return true on successful read, false otherwise
+     */
     bool getReadings(readings *data);
 
     /**
      * @brief Query charger for status bytes, populate a "charge_status" struct
+     * @return true on successful read, false otherwise
      */
     bool getChargeStatus(charge_status *status);
 
     /**
      * @brief Query charger for curve parameter bytes, populate a "curve_parameters" struct
+     * @return true on successful read, false otherwise
      */
     bool getCurveParams(curve_parameters *params);
 
     /**
      * @brief Write two arbitrary bytes with commandID
+     * @return true on successful write, false otherwise
      */
     bool writeTwoBytes(uint8_t commandID, uint8_t *data);
 
     /**
-     * @brief 
+     * @brief Write linear data with commandID
+     * @details See the PMBus 1.1 Spec for more info on how the linear data format works
+     * @param N the exponent
+     * @param value the mantissa (Y)
+     * @return True on success, false on failure
      */
     bool writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value);
+
+    /**
+     * @brief Sends commandID to the charger, and reads the receiveLength byte(s) long response into my_rx_buffer[] 
+     * @return true if we received the number of bytes we were expecting, false otherwise.
+     */
+    bool readWithCommand(uint8_t commandID, uint8_t receiveLength);
 
 private:
     /**
@@ -145,16 +163,16 @@ private:
     uint8_t my_rx_buffer[MAX_RECEIVE_BYTES];
 
     /**
-     * @brief Sends commandID to the charger, and reads the receiveLength byte(s) long response into my_rx_buffer[] 
-     * @return true if we received the number of bytes we were expecting, false otherwise.
-     */
-    bool readWithCommand(uint8_t commandID, uint8_t receiveLength);
-
-    /**
      * @brief Parses the first two bytes of my_rx_buffer[] in the "Linear Data" format outlined int the PMBus Specification
      * @details see the PMBus V1.1 Section 7.1 "Linear Data Format" for more info
      */
     uint16_t parseLinearData(void);
+
+    /**
+     * @brief Parse a voltage reading in the linear format
+     * @details See the PMBus 1.1 spec section 8.3.1 for more info
+     */
+    float parseLinearVoltage(int8_t N);
 
     /**
      * @brief Parses the first two bytes of my_rx_buffer[] into a curve_config struct and returns it via argument.

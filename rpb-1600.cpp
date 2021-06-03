@@ -36,7 +36,7 @@ bool RPB_1600::getReadings(readings *data)
         return false;
     }
 
-    data->v_out = parseLinearData();
+    data->v_out = parseLinearVoltage(CMD_N_VALUE_READ_VOUT);
 
     if (!readWithCommand(CMD_CODE_READ_IOUT, CMD_LENGTH_READ_IOUT))
     {
@@ -98,14 +98,14 @@ bool RPB_1600::getCurveParams(curve_parameters *params)
         return false;
     }
 
-    params->cv = parseLinearData();
+    params->cv = parseLinearVoltage(CMD_N_VALUE_CURVE_CV);
 
     if (!readWithCommand(CMD_CODE_CURVE_FV, CMD_LENGTH_CURVE_FV))
     {
         return false;
     }
 
-    params->floating_voltage = parseLinearData();
+    params->floating_voltage = parseLinearVoltage(CMD_N_VALUE_CURVE_FV);
 
     if (!readWithCommand(CMD_CODE_CURVE_TC, CMD_LENGTH_CURVE_TC))
     {
@@ -146,10 +146,6 @@ bool RPB_1600::getCurveParams(curve_parameters *params)
 
     return true;
 }
-
-//----------------------------------------------------------------------
-// Private Functions
-//----------------------------------------------------------------------
 
 bool RPB_1600::readWithCommand(uint8_t commandID, uint8_t receiveLength)
 {
@@ -199,6 +195,10 @@ bool RPB_1600::readWithCommand(uint8_t commandID, uint8_t receiveLength)
 
     return num_bytes == receiveLength;
 }
+
+//----------------------------------------------------------------------
+// Private Functions
+//----------------------------------------------------------------------
 
 bool RPB_1600::writeTwoBytes(uint8_t commandID, uint8_t *data)
 {
@@ -284,6 +284,28 @@ uint16_t RPB_1600::parseLinearData(void)
     Serial.printf("<RPB-1600 DEBUG> Mantissa: %d\n", mantissa);
     Serial.printf("<RPB-1600 DEBUG> Result: %d\n", result);
 #endif
+
+    return result;
+}
+
+float RPB_1600::parseLinearVoltage(int8_t N)
+{
+    uint16_t rawData = my_rx_buffer[0] | (my_rx_buffer[1] << 8);
+
+    // Calculate divisor using N
+    uint16_t divisor = 0x01 << abs(N);
+
+    float result = (float)rawData;
+
+    // Divide based on the polarity of N
+    if (N > 0)
+    {
+        result /= -divisor;
+    }
+    else if (N < 0)
+    {
+        result /= divisor;
+    }
 
     return result;
 }
