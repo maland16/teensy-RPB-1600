@@ -10,7 +10,7 @@
 
 // Uncomment the below #define to enable debugging print statements.
 // NOTE: You must call Serial.being(<baud rate>) in your setup() for this to work
-//#define RPB_1600_DEBUG
+#define RPB_1600_DEBUG
 
 /**
  * @brief The maximum number of bytes we could possibly expect to receive from the charger
