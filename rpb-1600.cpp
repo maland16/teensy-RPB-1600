@@ -295,6 +295,8 @@ float RPB_1600::parseLinearVoltage(int8_t N)
     // Calculate divisor using N
     uint16_t divisor = 0x01 << abs(N);
 
+    Serial.printf("<RPB-1600 DEBUG> Parsing linear voltage w/N: %d\n", N);
+
     float result = (float)rawData;
 
     // Divide based on the polarity of N
@@ -306,6 +308,8 @@ float RPB_1600::parseLinearVoltage(int8_t N)
     {
         result /= divisor;
     }
+
+    Serial.printf("<RPB-1600 DEBUG> Linear voltage result: %4.2fV\n", result);
 
     return result;
 }
