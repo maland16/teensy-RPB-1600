@@ -133,10 +133,10 @@ public:
     bool writeTwoBytes(uint8_t commandID, uint8_t *data);
 
     /**
-     * @brief Write linear data with commandID
+     * @brief Write linear value with specified commandID & N
      * @details See the PMBus 1.1 Spec for more info on how the linear data format works
      * @param N the exponent
-     * @param value the mantissa (Y)
+     * @param value the value you want to write (NOT the Y value)
      * @return True on success, false on failure
      */
     bool writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value);
@@ -161,6 +161,15 @@ private:
      * @brief Buffer to hold bytes received over i2c
      */
     uint8_t my_rx_buffer[MAX_RECEIVE_BYTES];
+
+    /**
+     * @brief Helper for writing linear data with a specified commandID
+     * @details See the PMBus 1.1 Spec for more info on how the linear data format works
+     * @param N the exponent
+     * @param Y the mantissa
+     * @return True on success, false on failure
+     */
+    bool writeLinearDataHelper(uint8_t commandID, int8_t N, int16_t Y);
 
     /**
      * @brief Parses the first two bytes of my_rx_buffer[] in the "Linear Data" format outlined int the PMBus Specification

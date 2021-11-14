@@ -105,7 +105,7 @@ void loop()
     Serial.printf("Curve configuration setting options:\n");
     Serial.printf("1) Write to arbitrary command/data (write two bytes)\n");
     Serial.printf("2) Write to command with linear data\n");
-    Serial.printf("3) Read data via specified command (must uncomment debug #define)\n");
+    Serial.printf("3) Read data via specified command (must have debug #defined uncommented)\n");
 
     input = getInput();
 
@@ -127,6 +127,8 @@ void loop()
 
       data[1] = getHexByteInput();
 
+      // TODO: The padding on the hex here isn't correct in certain cases.
+      // Ex: if data[0] is 0x72, and data[1] is 0x00, it will print 0x720
       Serial.printf("Attempting to write 0x%x%x with command 0x%x...\n", data[1], data[0], cmd);
 
       if (charger.writeTwoBytes(cmd, data))
@@ -170,7 +172,7 @@ void loop()
         Serial.read();
       } // Flush the serial RX buffer
 
-      Serial.printf("Command = 0x%x, N = %d, Value (Y) = %d\n", cmd, N, value);
+      Serial.printf("Command = 0x%x, N = %d, Y = %d\n", cmd, N, value);
 
       if (charger.writeLinearDataCommand(cmd, N, value))
       {
@@ -284,7 +286,7 @@ uint8_t getHexByteInput(void)
     }
     else if (y <= 0x39)
     {
-      myHex[i] = y - 0x30; //preserve 1 - 9
+      myHex[i] = y - 0x30; //preserve: 1 - 9
     }
     else
     {

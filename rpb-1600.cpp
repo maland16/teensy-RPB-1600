@@ -196,10 +196,6 @@ bool RPB_1600::readWithCommand(uint8_t commandID, uint8_t receiveLength)
     return num_bytes == receiveLength;
 }
 
-//----------------------------------------------------------------------
-// Private Functions
-//----------------------------------------------------------------------
-
 bool RPB_1600::writeTwoBytes(uint8_t commandID, uint8_t *data)
 {
 #ifdef RPB_1600_DEBUG
@@ -216,6 +212,29 @@ bool RPB_1600::writeTwoBytes(uint8_t commandID, uint8_t *data)
 
 bool RPB_1600::writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value)
 {
+    uint16_t Y = value;
+
+    // The Y value is calculated by doing the following: Y = value * 2 ^ N
+    // however, N can be positive or negative, so we shift the mantissa accordingly
+    // to perform the multiplication by a power of 2.
+    if (N > 0)
+    {
+        Y <<= N;
+    }
+    else if (N < 0)
+    {
+        Y >>= (-N);
+    }
+
+    writeLinearDataHelper(commandID, N, Y)
+}
+
+//----------------------------------------------------------------------
+// Private Functions
+//----------------------------------------------------------------------
+
+bool RPB_1600::writeLinearDataHelper(uint8_t commandID, int8_t N, int16_t Y);
+{
     // Make sure the N value isn't bigger then 5 bits
     if (abs(N) > 15)
     {
@@ -225,29 +244,29 @@ bool RPB_1600::writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value
         return false;
     }
 
-    // Make sure the value (Mantissa) can fit in 11 bits
-    if (abs(value) > 2047)
+    // Make sure the Y (Mantissa) can fit in 11 bits
+    if (abs(Y) > 2047)
     {
 #ifdef RPB_1600_DEBUG
-        Serial.printf("<RPB-1600 DEBUG> Mantissa value too large! Can't convert to linear format. Value = %d\n", value);
+        Serial.printf("<RPB-1600 DEBUG> Mantissa (Y) value too large! Can't convert to linear format. Y = %d\n", Y);
 #endif
         return false;
     }
 
-    // The goal here is to truncate value to 11 bits, and put those in the lowest 11 bits of the outgoing data
+    // The goal here is to truncate Y to 11 bits, and put those in the lowest 11 bits of the outgoing data
     // Then we need to truncate N to 5 bits, and put those bits in the highest 5 bits of the outgoing data
     // See Section 7.1 of the PMBus 1.1 specification for more info on the "Linear Data Format"
     // Note that data[0] is the low byte (sent first) and data[1] is the high byte (sent second)
     uint8_t data[2] = {0x00, 0x00};
 
     // Mask the lowest 8 bits of the mantissa, and put those bits in the low byte of the outgoing data
-    data[0] = value & 0x00FF;
+    data[0] = Y & 0x00FF;
     // Mask the lowest 3 bits of the high byte of the mantissa, and put those bits in the high byte of the outgoing data
-    data[1] = (value & 0x0700) >> 8;
+    data[1] = (Y & 0x0700) >> 8;
     // Mask the lowest 5 bits of N, and shift them to be the highest 5 bytes of the high byte
     data[1] = (N & 0x1F) << 3;
 #ifdef RPB_1600_DEBUG
-    Serial.printf("<RPB-1600 DEBUG> Attempting to write linear data with N = %d and Value (Y) = %d\n", N, value);
+    Serial.printf("<RPB-1600 DEBUG> Attempting to write linear data with N = %d and Value (Y) = %d\n", N, Y);
 #endif
     writeTwoBytes(commandID, data);
 
