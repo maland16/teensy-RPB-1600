@@ -226,14 +226,14 @@ bool RPB_1600::writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value
         Y >>= (-N);
     }
 
-    writeLinearDataHelper(commandID, N, Y)
+    return writeLinearDataHelper(commandID, N, Y);
 }
 
 //----------------------------------------------------------------------
 // Private Functions
 //----------------------------------------------------------------------
 
-bool RPB_1600::writeLinearDataHelper(uint8_t commandID, int8_t N, int16_t Y);
+bool RPB_1600::writeLinearDataHelper(uint8_t commandID, int8_t N, int16_t Y)
 {
     // Make sure the N value isn't bigger then 5 bits
     if (abs(N) > 15)
