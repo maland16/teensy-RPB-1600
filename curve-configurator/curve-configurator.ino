@@ -160,7 +160,7 @@ void loop()
         Serial.read();
       } // Flush the serial RX buffer
 
-      Serial.printf("Type the Y, or Mantissa value and press ENTER (negative numbers represented with minus sign)\n");
+      Serial.printf("Type the value and press ENTER (negative numbers represented with minus sign)\n");
 
       while (Serial.available() == 0)
       {
@@ -172,7 +172,7 @@ void loop()
         Serial.read();
       } // Flush the serial RX buffer
 
-      Serial.printf("Command = 0x%x, N = %d, Y = %d\n", cmd, N, value);
+      Serial.printf("Command = 0x%x, N = %d, value = %d\n", cmd, N, value);
 
       if (charger.writeLinearDataCommand(cmd, N, value))
       {
@@ -286,11 +286,11 @@ uint8_t getHexByteInput(void)
     }
     else if (y <= 0x39)
     {
-      myHex[i] = y - 0x30; //preserve: 1 - 9
+      myHex[i] = y - 0x30; // preserve: 1 - 9
     }
     else
     {
-      myHex[i] = y - 0x37; //preserve A - F
+      myHex[i] = y - 0x37; // preserve A - F
     }
   }
 

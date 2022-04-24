@@ -212,19 +212,27 @@ bool RPB_1600::writeTwoBytes(uint8_t commandID, uint8_t *data)
 
 bool RPB_1600::writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value)
 {
-    uint16_t Y = value;
+    uint16_t Y = 0;
+    uint16_t denominator = 0x0001;
+    // The Y value is calculated using the following equation
+    // (reference PMBUS spec rev 1.1 section 7.1): Value = Y * 2 ^ N
+    // Y = Value / (2 ^ N)
+    // We'll calculate denominator and do the math based on the polarity of N
 
-    // The Y value is calculated by doing the following: Y = value * 2 ^ N
-    // however, N can be positive or negative, so we shift the mantissa accordingly
-    // to perform the multiplication by a power of 2.
     if (N > 0)
     {
-        Y <<= N;
+        denominator <<= N;
+        Y = value / denominator;
     }
     else if (N < 0)
     {
-        Y >>= (-N);
+        denominator <<= (-N);
+        Y = value * denominator;
     }
+
+#ifdef RPB_1600_DEBUG
+    Serial.printf("<RPB-1600 DEBUG> Y calculation: Denom = %d Y = %d\n", denominator, Y);
+#endif
 
     return writeLinearDataHelper(commandID, N, Y);
 }
