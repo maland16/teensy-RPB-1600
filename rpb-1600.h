@@ -10,7 +10,7 @@
 
 // Uncomment the below #define to enable debugging print statements.
 // NOTE: You must call Serial.being(<baud rate>) in your setup() for this to work
-#define RPB_1600_DEBUG
+// #define RPB_1600_DEBUG
 
 /**
  * @brief The maximum number of bytes we could possibly expect to receive from the charger
@@ -142,7 +142,7 @@ public:
     bool writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value);
 
     /**
-     * @brief Sends commandID to the charger, and reads the receiveLength byte(s) long response into my_rx_buffer[] 
+     * @brief Sends commandID to the charger, and reads the receiveLength byte(s) long response into my_rx_buffer[]
      * @return true if we received the number of bytes we were expecting, false otherwise.
      */
     bool readWithCommand(uint8_t commandID, uint8_t receiveLength);
@@ -150,9 +150,9 @@ public:
 private:
     /**
      * @brief The address of the charger we're communicating with
-     * @details This is set using the A0, A1, and A2 pins on the RPB-1600. These three pins control 
-     * the lowest 3 bits of the 7 bit address, and the MSB is always 1. For example, if all the 
-     * pins are tied high, the address would be 0x47. 
+     * @details This is set using the A0, A1, and A2 pins on the RPB-1600. These three pins control
+     * the lowest 3 bits of the 7 bit address, and the MSB is always 1. For example, if all the
+     * pins are tied high, the address would be 0x47.
      * @note Address 0 is a reserved address.
      */
     uint8_t my_charger_address;

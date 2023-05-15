@@ -231,7 +231,7 @@ bool RPB_1600::writeLinearDataCommand(uint8_t commandID, int8_t N, int16_t value
     }
 
 #ifdef RPB_1600_DEBUG
-    Serial.printf("<RPB-1600 DEBUG> Y calculation: Denom = %d Y = %d\n", denominator, Y);
+    Serial.printf("<RPB-1600 DEBUG> Y calculation: Value = %d Denom = %d Y = %d\n", value, denominator, Y);
 #endif
 
     return writeLinearDataHelper(commandID, N, Y);
@@ -274,7 +274,7 @@ bool RPB_1600::writeLinearDataHelper(uint8_t commandID, int8_t N, int16_t Y)
     // Mask the lowest 5 bits of N, and shift them to be the highest 5 bytes of the high byte
     data[1] = (N & 0x1F) << 3;
 #ifdef RPB_1600_DEBUG
-    Serial.printf("<RPB-1600 DEBUG> Attempting to write linear data with N = %d and Value (Y) = %d\n", N, Y);
+    Serial.printf("<RPB-1600 DEBUG> Attempting to write linear data with N = %d and Mantissa (Y) = %d\n", N, Y);
 #endif
     writeTwoBytes(commandID, data);
 
@@ -322,7 +322,9 @@ float RPB_1600::parseLinearVoltage(int8_t N)
     // Calculate divisor using N
     uint16_t divisor = 0x01 << abs(N);
 
+#ifdef RPB_1600_DEBUG
     Serial.printf("<RPB-1600 DEBUG> Parsing linear voltage w/N: %d\n", N);
+#endif
 
     float result = (float)rawData;
 
@@ -336,7 +338,9 @@ float RPB_1600::parseLinearVoltage(int8_t N)
         result /= divisor;
     }
 
+#ifdef RPB_1600_DEBUG
     Serial.printf("<RPB-1600 DEBUG> Linear voltage result: %4.2fV\n", result);
+#endif
 
     return result;
 }
